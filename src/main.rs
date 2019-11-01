@@ -207,8 +207,16 @@ fn main()-> Result<(), std::io::Error> {
     let f = File::open(src_path)?;
     let mut reader = BufReader::new(f);
 
-    let mut j_str = String::new();
-    let _ = reader.read_to_string(&mut j_str);
+    let mut src: Vec<u8> = vec![];
+    reader.read_to_end(&mut src)?;
+    let j_str: String;
+    // check BOM
+    if src.len() > 3 && src[0] == 0xEF && src[1] == 0xBB && src[2] == 0xBF {
+        j_str = String::from_utf8_lossy(&src[3..]).to_string();
+    }
+    else {
+        j_str = String::from_utf8_lossy(&src).to_string();
+    }
     let mut parser = Parser::new(
         j_str.chars()
     );

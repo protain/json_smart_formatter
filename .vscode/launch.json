@@ -1,0 +1,19 @@
+{
+    // IntelliSense を使用して利用可能な属性を学べます。
+    // 既存の属性の説明をホバーして表示します。
+    // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(Windows) 起動",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/debug/json_smart_formatter.exe",
+            "args": [ "d:\\src\\yacl_enhance\\src\\sonBp2\\SonBp.Driver\\Sample\\Data\\txy_02.pdf.sonbp.cache\\txy_02_88D730D2A630F429.json" ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        }
+    ]
+}

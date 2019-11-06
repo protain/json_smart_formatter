@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 rustc-serialize = "0.3.24"
+failure = "0.1.6"

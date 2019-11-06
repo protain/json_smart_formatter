@@ -1,6 +1,7 @@
 use std::fs::{ File };
 use std::io::{BufReader, Read, BufWriter, Write};
 use rustc_serialize::json::{Parser, JsonEvent, StackElement};
+#[macro_use] use failure::Error;
 
 fn build_indent(buf: &mut String, indent_lvl: u32) {
     *buf = buf.trim_end().to_string();
@@ -10,7 +11,7 @@ fn build_indent(buf: &mut String, indent_lvl: u32) {
     }
 }
 
-fn escape_str(wr: &mut dyn std::fmt::Write, v: &str) -> std::fmt::Result {
+fn escape_str(wr: &mut dyn std::fmt::Write, v: &str) -> Result<(), Error> {
     wr.write_str("\"")?;
     let mut start = 0;
 
@@ -74,7 +75,7 @@ fn escape_str(wr: &mut dyn std::fmt::Write, v: &str) -> std::fmt::Result {
 fn json_format(
     parser: &mut Parser<std::str::Chars>,
     buf: &mut String,
-    mut indent_lvl: u32)-> std::fmt::Result
+    mut indent_lvl: u32)-> Result<(), Error>
 {
     let mut dst_str = String::new();
     let mut dst_str_mini = String::new();
@@ -194,7 +195,7 @@ fn usage() {
     println!("→ 渡されたUTF-8エンコードのJSONファイルをいい感じに整形して mod.jsonとして保存します。", )
 }
 
-fn main()-> Result<(), std::io::Error> {
+fn real_main()-> Result<(), Error> {
     let src_path: &str;
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 1 {
@@ -239,4 +240,12 @@ fn main()-> Result<(), std::io::Error> {
     writer.write(dst_str.as_bytes())?;
 
     return Ok(());
+}
+
+fn main() {
+    let res = real_main();
+    if res.is_err() {
+        let e = res.unwrap_err() as failure::Error;
+        println!("{}\n{}", e, e.backtrace());
+    }
 }

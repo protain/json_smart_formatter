@@ -1,5 +1,6 @@
 use std::fs::{ File };
 use std::io::{BufReader, Read, BufWriter, Write};
+use arboard::Clipboard;
 use rustc_serialize::json::{Parser, JsonEvent, StackElement};
 #[macro_use] use failure::Error;
 
@@ -196,20 +197,26 @@ fn usage() {
 }
 
 fn real_main()-> Result<(), Error> {
-    let src_path: &str;
+    let mut src_path: Option<String> = None;
     let args: Vec<String> = std::env::args().collect();
-    if args.len() > 1 {
-        src_path = &args[1];
+    let src = if args.len() > 1 {
+        src_path = Some(args[1].clone());
+        let f = File::open(src_path.as_ref().unwrap())?;
+        let mut reader = BufReader::new(f);
+
+        let mut src: Vec<u8> = vec![];
+        reader.read_to_end(&mut src)?;
+        src
     }
     else {
-        usage();
-        return Ok(());
-    }
-    let f = File::open(src_path)?;
-    let mut reader = BufReader::new(f);
-
-    let mut src: Vec<u8> = vec![];
-    reader.read_to_end(&mut src)?;
+        let mut clipboard = Clipboard::new()?;
+        if let Ok(clipboard_text) = clipboard.get_text() {
+            clipboard_text.into_bytes()
+        } else {
+            usage();
+            return Ok(());
+        }
+    };
     let j_str: String;
     // check BOM
     if src.len() > 3 && src[0] == 0xEF && src[1] == 0xBB && src[2] == 0xBF {
@@ -228,16 +235,22 @@ fn real_main()-> Result<(), Error> {
         return Ok(());
     }
 
-    let mut path = std::path::PathBuf::from(src_path);
-    let dst_name = &format!("{}_mod.{}",
-        path.file_stem().unwrap_or(std::ffi::OsStr::new("")).to_string_lossy(),
-        path.extension().unwrap_or(std::ffi::OsStr::new("json")).to_string_lossy());
-    path.pop();
-    path.push(dst_name);
-    let w = File::create(path)?;
-    let mut writer = BufWriter::new(w);
+    if src_path.is_none() {
+        let mut clipboard = Clipboard::new()?;
+        clipboard.set_text(dst_str)?;
+        return Ok(());
+    } else {
+        let mut path = std::path::PathBuf::from(src_path.unwrap());
+        let dst_name = &format!("{}_mod.{}",
+            path.file_stem().unwrap_or(std::ffi::OsStr::new("")).to_string_lossy(),
+            path.extension().unwrap_or(std::ffi::OsStr::new("json")).to_string_lossy());
+        path.pop();
+        path.push(dst_name);
+        let w = File::create(path)?;
+        let mut writer = BufWriter::new(w);
 
-    writer.write(dst_str.as_bytes())?;
+        writer.write(dst_str.as_bytes())?;
+    }
 
     return Ok(());
 }
